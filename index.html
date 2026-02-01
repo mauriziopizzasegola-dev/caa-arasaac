@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>CAA ARASAAC</title>
+
+  <!-- jsPDF + html2canvas -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f7f7f7;
+      padding: 20px;
+      text-align: center;
+    }
+
+    #controls {
+      margin-bottom: 20px;
+    }
+
+    input {
+      width: 60%;
+      padding: 10px;
+      font-size: 18px;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 18px;
+      margin-left: 10px;
+      cursor: pointer;
+    }
+
+    #output {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 30px;
+    }
+
+    .card {
+      background: white;
+      padding: 10px;
+      border-radius: 10px;
+      width: 150px;
+      text-align: center;
+      border: 1px solid #000;
+    }
+
+    .card img {
+      width: 120px;
+    }
+
+    .word {
+      margin-top: 8px;
+      font-weight: bold;
+      font-size: 18px;
+    }
+
+    #messages {
+      margin-top: 20px;
+      color: #b00020;
+      font-weight: bold;
+    }
+  </style>
+</head>
+
+<body>
+
+<h1>Comunicazione Aumentativa – ARASAAC</h1>
+
+<div id="controls">
+  <input id="sentence" type="text"
+    placeholder="Scrivi una frase (es. io mangio la mela)">
+  <button onclick="genera()">Genera</button>
+  <button onclick="scaricaPDF()">Scarica PDF</button>
+</div>
+
+<div id="messages"></div>
+
+<div id="pdf-content">
+  <div id="output"></div>
+</div>
+
+<script>
+const stopwords = [
+  "il","lo","la","i","gli","le","un","uno","una",
+  "a","di","da","in","con","su","per","e","ma"
+];
+
+async function genera() {
+  const output = document.getElementById("output");
+  const messages = document.getElementById("messages");
+  output.innerHTML = "";
+  messages.innerText = "";
+
+  const frase = document
+    .getElementById("sentence")
+    .value
+    .toLowerCase()
+    .replace(/[.,!?]/g, "");
+
+  const parole = frase.split(" ");
+
+  for (let parola of parole) {
+    if (stopwords.includes(parola)) continue;
+
+    const url = `https://api.arasaac.org/api/pictograms/it/search/${parola}`;
+
+    const res = await fetch(url);
+    const dati = await res.json();
+
+    if (!dati.length) {
+      messages.innerText = "Alcune parole non hanno pittogrammi ARASAAC.";
+      continue;
+    }
+
+    const id = dati[0]._id;
+    const imgUrl = `https://static.arasaac.org/pictograms/${id}/${id}_300.png`;
+
+    const card = document.createElement("div");
+    card.className = "card";
+
+    const img = document.createElement("img");
+    img.src = imgUrl;
+
+    const label = document.createElement("div");
+    label.className = "word";
+    label.innerText = parola;
+
+    card.appendChild(img);
+    card.appendChild(label);
+    output.appendChild(card);
+  }
+}
+
+async function scaricaPDF() {
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF("landscape", "mm", "a4");
+
+  const element = document.getElementById("pdf-content");
+
+  const canvas = await html2canvas(element, { scale: 2 });
+  const imgData = canvas.toDataURL("image/png");
+
+  pdf.addImage(imgData, "PNG", 10, 10, 277, 190);
+  pdf.save("frase_CAA.pdf");
+}
+</script>
+
+</body>
+</html>
+
