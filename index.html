@@ -223,66 +223,8 @@ function scegli(img, dati) {
 
 /* ================= PDF ================= */
 
-async function scaricaPDF() {
-  const { jsPDF } = window.jspdf;
-  const pdf = new jsPDF("landscape", "mm", "a4");
-
-  const cards = document.querySelectorAll(".card");
-
-  const startX = 10;
-  const startY = 20;
-  const cardWidth = 60;
-  const cardHeight = 80;
-  const gap = 10;
-
-  let x = startX;
-  let y = startY;
-
-  for (let card of cards) {
-    const img = card.querySelector("img");
-    const word = card.querySelector(".word").textContent;
-
-    // bordo card
-    pdf.setDrawColor(0);
-    pdf.setLineWidth(1);
-    pdf.roundedRect(x, y, cardWidth, cardHeight, 4, 4);
-
-    // pittogramma
-    const imgData = await loadImageAsDataURL(img.src);
-    pdf.addImage(imgData, "PNG", x + 5, y + 5, 50, 45);
-
-    // testo
-    pdf.setFontSize(14);
-    pdf.setTextColor(0);
-    pdf.text(word, x + cardWidth / 2, y + 65, { align: "center" });
-
-    x += cardWidth + gap;
-
-    // nuova riga se finisce la pagina
-    if (x + cardWidth > 280) {
-      x = startX;
-      y += cardHeight + gap;
-    }
-  }
-
-  pdf.save("frase_CAA.pdf");
-}
-
-// helper per caricare immagini esterne
-function loadImageAsDataURL(url) {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = function () {
-      const canvas = document.createElement("canvas");
-      canvas.width = img.width;
-      canvas.height = img.height;
-      const ctx = canvas.getContext("2d");
-      ctx.drawImage(img, 0, 0);
-      resolve(canvas.toDataURL("image/png"));
-    };
-    img.src = url;
-  });
+function scaricaPDF() {
+  alert("VERSIONE NUOVA DEL PDF CARICATA");
 }
 
 
