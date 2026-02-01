@@ -225,11 +225,67 @@ function scegli(img, dati) {
 
 async function scaricaPDF() {
   const { jsPDF } = window.jspdf;
-  const canvas = await html2canvas(document.getElementById("pdf-content"), {scale:2});
-  const pdf = new jsPDF("landscape","mm","a4");
-  pdf.addImage(canvas,"PNG",10,10,277,190);
+
+  // 1. Clono SOLO l'area CAA
+  const original = document.getElementById("pdf-content");
+  const clone = original.cloneNode(true);
+
+  // 2. Creo contenitore PDF rigido
+  const wrapper = document.createElement("div");
+  wrapper.style.width = "1100px";          // LARGHEZZA FISSA
+  wrapper.style.background = "white";
+  wrapper.style.padding = "20px";
+  wrapper.style.boxSizing = "border-box";
+
+  // 3. Forzo layout "striscia" nel clone
+  const output = clone.querySelector("#output");
+  output.style.display = "flex";
+  output.style.flexWrap = "nowrap";
+  output.style.justifyContent = "flex-start";
+  output.style.gap = "20px";
+
+  wrapper.appendChild(clone);
+
+  // 4. Wrapper fuori dallo schermo
+  wrapper.style.position = "fixed";
+  wrapper.style.left = "-9999px";
+  document.body.appendChild(wrapper);
+
+  // 5. Canvas STABILE
+  const canvas = await html2canvas(wrapper, {
+    scale: 2,
+    backgroundColor: "#ffffff",
+    useCORS: true
+  });
+
+  document.body.removeChild(wrapper);
+
+  const imgData = canvas.toDataURL("image/png");
+
+  // 6. PDF senza deformazioni
+  const pdf = new jsPDF("landscape", "mm", "a4");
+  const pdfWidth = pdf.internal.pageSize.getWidth();
+  const pdfHeight = pdf.internal.pageSize.getHeight();
+
+  const imgRatio = canvas.width / canvas.height;
+  const pdfRatio = pdfWidth / pdfHeight;
+
+  let w, h;
+  if (imgRatio > pdfRatio) {
+    w = pdfWidth - 20;
+    h = w / imgRatio;
+  } else {
+    h = pdfHeight - 20;
+    w = h * imgRatio;
+  }
+
+  const x = (pdfWidth - w) / 2;
+  const y = (pdfHeight - h) / 2;
+
+  pdf.addImage(imgData, "PNG", x, y, w, h);
   pdf.save("frase_CAA.pdf");
 }
+
 
 /* ================= PROFILI ================= */
 
