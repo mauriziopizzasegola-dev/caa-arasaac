@@ -1,19 +1,25 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8">
-  <title>CAA ARASAAC</title>
+  <meta charset="UTF-8" />
+  <title>CAA – ARASAAC</title>
 
-  <!-- jsPDF + html2canvas -->
+  <!-- Librerie PDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
   <style>
+    /* ===== STILE BASE ===== */
+
     body {
       font-family: Arial, sans-serif;
-      background: #f7f7f7;
+      background: #f5f5f5;
       padding: 20px;
       text-align: center;
+    }
+
+    h1 {
+      margin-bottom: 20px;
     }
 
     #controls {
@@ -27,42 +33,52 @@
     }
 
     button {
-      padding: 10px 20px;
+      padding: 10px 18px;
       font-size: 18px;
       margin-left: 10px;
       cursor: pointer;
     }
 
+    #messages {
+      margin-top: 15px;
+      color: #b00020;
+      font-weight: bold;
+    }
+
+    /* ===== AREA CAA ===== */
+
+    #pdf-content {
+      max-width: 1100px;      /* BLOCCO CHIAVE */
+      margin: 0 auto;
+      background: white;
+      padding: 20px;
+    }
+
     #output {
       display: flex;
-      gap: 20px;
-      justify-content: center;
       flex-wrap: wrap;
-      margin-top: 30px;
+      gap: 20px;
+      justify-content: flex-start;
     }
 
     .card {
-      background: white;
-      padding: 10px;
-      border-radius: 10px;
-      width: 150px;
-      text-align: center;
+      width: 180px;
+      background: #fff;
       border: 1px solid #000;
+      border-radius: 10px;
+      padding: 10px;
+      box-sizing: border-box;
+      text-align: center;
     }
 
     .card img {
       width: 120px;
+      height: auto;
     }
 
     .word {
       margin-top: 8px;
-      font-weight: bold;
       font-size: 18px;
-    }
-
-    #messages {
-      margin-top: 20px;
-      color: #b00020;
       font-weight: bold;
     }
   </style>
@@ -70,107 +86,125 @@
 
 <body>
 
-<h1>Comunicazione Aumentativa – ARASAAC</h1>
+  <h1>Comunicazione Aumentativa – ARASAAC</h1>
 
-<div id="controls">
-  <input id="sentence" type="text"
-    placeholder="Scrivi una frase (es. io mangio la mela)">
-  <button onclick="genera()">Genera</button>
-  <button onclick="scaricaPDF()">Scarica PDF</button>
-</div>
+  <div id="controls">
+    <input
+      id="sentence"
+      type="text"
+      placeholder="Scrivi una frase (es. io cammino nel bosco)"
+    />
+    <button onclick="genera()">Genera</button>
+    <button onclick="scaricaPDF()">Scarica PDF</button>
+  </div>
 
-<div id="messages"></div>
+  <div id="messages"></div>
 
-<div id="pdf-content">
-  <div id="output"></div>
-</div>
+  <div id="pdf-content">
+    <div id="output"></div>
+  </div>
 
-<script>
-const stopwords = [
-  "il","lo","la","i","gli","le","un","uno","una",
-  "a","di","da","in","con","su","per","e","ma"
-];
+  <script>
+    /* ===== LOGICA CAA ===== */
 
-async function genera() {
-  const output = document.getElementById("output");
-  const messages = document.getElementById("messages");
-  output.innerHTML = "";
-  messages.innerText = "";
+    const stopwords = [
+      "il","lo","la","i","gli","le","un","uno","una",
+      "a","di","da","in","con","su","per","e","ma","nel","nello","nella"
+    ];
 
-  const frase = document
-    .getElementById("sentence")
-    .value
-    .toLowerCase()
-    .replace(/[.,!?]/g, "");
+    async function genera() {
+      const output = document.getElementById("output");
+      const messages = document.getElementById("messages");
+      output.innerHTML = "";
+      messages.textContent = "";
 
-  const parole = frase.split(" ");
+      const frase = document
+        .getElementById("sentence")
+        .value
+        .toLowerCase()
+        .replace(/[.,!?]/g, "");
 
-  for (let parola of parole) {
-    if (stopwords.includes(parola)) continue;
+      const parole = frase.split(" ");
 
-    const url = `https://api.arasaac.org/api/pictograms/it/search/${parola}`;
+      for (let parola of parole) {
+        if (stopwords.includes(parola)) continue;
 
-    const res = await fetch(url);
-    const dati = await res.json();
+        try {
+          const res = await fetch(
+            `https://api.arasaac.org/api/pictograms/it/search/${parola}`
+          );
+          const dati = await res.json();
 
-    if (!dati.length) {
-      messages.innerText = "Alcune parole non hanno pittogrammi ARASAAC.";
-      continue;
+          if (!dati.length) {
+            messages.textContent =
+              "Alcune parole non hanno pittogrammi ARASAAC.";
+            continue;
+          }
+
+          const id = dati[0]._id;
+          const imgUrl =
+            `https://static.arasaac.org/pictograms/${id}/${id}_300.png`;
+
+          const card = document.createElement("div");
+          card.className = "card";
+
+          const img = document.createElement("img");
+          img.src = imgUrl;
+          img.crossOrigin = "anonymous";
+
+          const label = document.createElement("div");
+          label.className = "word";
+          label.textContent = parola;
+
+          card.appendChild(img);
+          card.appendChild(label);
+          output.appendChild(card);
+
+        } catch (err) {
+          messages.textContent = "Errore di connessione ad ARASAAC.";
+        }
+      }
     }
 
-    const id = dati[0]._id;
-    const imgUrl = `https://static.arasaac.org/pictograms/${id}/${id}_300.png`;
+    /* ===== PDF CORRETTO (NO DISTORSIONI) ===== */
 
-    const card = document.createElement("div");
-    card.className = "card";
+    async function scaricaPDF() {
+      const { jsPDF } = window.jspdf;
+      const element = document.getElementById("pdf-content");
 
-    const img = document.createElement("img");
-    img.src = imgUrl;
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        backgroundColor: "#ffffff",
+        useCORS: true
+      });
 
-    const label = document.createElement("div");
-    label.className = "word";
-    label.innerText = parola;
+      const imgData = canvas.toDataURL("image/png");
 
-    card.appendChild(img);
-    card.appendChild(label);
-    output.appendChild(card);
-  }
-}
+      const pdf = new jsPDF("landscape", "mm", "a4");
 
-async function scaricaPDF() {
-  const { jsPDF } = window.jspdf;
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
 
-  const element = document.getElementById("pdf-content");
+      const imgRatio = canvas.width / canvas.height;
+      const pdfRatio = pdfWidth / pdfHeight;
 
-  const canvas = await html2canvas(element, {
-    scale: 2,
-    backgroundColor: "#ffffff"
-  });
+      let finalWidth, finalHeight;
 
-  const imgData = canvas.toDataURL("image/png");
+      if (imgRatio > pdfRatio) {
+        finalWidth = pdfWidth - 20;
+        finalHeight = finalWidth / imgRatio;
+      } else {
+        finalHeight = pdfHeight - 20;
+        finalWidth = finalHeight * imgRatio;
+      }
 
-  const pdf = new jsPDF("landscape", "mm", "a4");
+      const x = (pdfWidth - finalWidth) / 2;
+      const y = (pdfHeight - finalHeight) / 2;
 
-  const pdfWidth = pdf.internal.pageSize.getWidth();
-  const pdfHeight = pdf.internal.pageSize.getHeight();
-
-  const imgWidth = canvas.width;
-  const imgHeight = canvas.height;
-
-  // calcolo proporzioni corrette
-  const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
-
-  const finalWidth = imgWidth * ratio;
-  const finalHeight = imgHeight * ratio;
-
-  const x = (pdfWidth - finalWidth) / 2;
-  const y = (pdfHeight - finalHeight) / 2;
-
-  pdf.addImage(imgData, "PNG", x, y, finalWidth, finalHeight);
-  pdf.save("frase_CAA.pdf");
-}
-
-</script>
+      pdf.addImage(imgData, "PNG", x, y, finalWidth, finalHeight);
+      pdf.save("frase_CAA.pdf");
+    }
+  </script>
 
 </body>
 </html>
