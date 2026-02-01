@@ -115,6 +115,61 @@ button {
 </head>
 
 <body>
+<!-- ================= BLOCCO ACCESSO BETA ================= -->
+<div id="beta-lock" style="
+  position:fixed;
+  inset:0;
+  background:#f2f4f7;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:99999;
+">
+  <div style="
+    background:white;
+    padding:30px;
+    border-radius:12px;
+    text-align:center;
+    max-width:320px;
+    width:100%;
+    box-shadow:0 10px 30px rgba(0,0,0,0.2);
+  ">
+    <h2>CAA – Beta privata</h2>
+    <p style="font-size:14px;color:#555;">
+      Accesso riservato ai tester
+    </p>
+
+    <input
+      type="password"
+      id="beta-password"
+      placeholder="Password"
+      style="width:100%;padding:12px;font-size:16px;"
+    >
+
+    <button
+      onclick="unlockBeta()"
+      style="margin-top:15px;width:100%;padding:12px;font-size:18px;"
+    >
+      Entra
+    </button>
+
+    <p id="beta-error" style="color:red;margin-top:10px;"></p>
+  </div>
+</div>
+
+<script>
+function unlockBeta() {
+  const PASSWORD = "betaCAA2026"; // ← CAMBIA QUI LA PASSWORD
+  const input = document.getElementById("beta-password").value;
+
+  if (input === PASSWORD) {
+    document.getElementById("beta-lock").style.display = "none";
+  } else {
+    document.getElementById("beta-error").textContent = "Password errata";
+  }
+}
+</script>
+<!-- ================= FINE BLOCCO ACCESSO ================= -->
 
 <h1>CAA – ARASAAC</h1>
 
