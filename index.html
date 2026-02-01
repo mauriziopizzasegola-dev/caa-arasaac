@@ -9,9 +9,9 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
-/* =========================================================
+/* =====================================================
    STILE GENERALE (SCHERMO)
-   ========================================================= */
+   ===================================================== */
 
 body {
   font-family: Arial, sans-serif;
@@ -56,9 +56,9 @@ button {
   font-weight: bold;
 }
 
-/* =========================================================
+/* =====================================================
    AREA CAA (SCHERMO)
-   ========================================================= */
+   ===================================================== */
 
 #pdf-content {
   max-width: 1200px;
@@ -101,9 +101,9 @@ button {
   text-transform: uppercase;
 }
 
-/* =========================================================
+/* =====================================================
    MODALITÀ STAMPA / STRISCIA CAA
-   ========================================================= */
+   ===================================================== */
 
 @media print {
 
@@ -159,9 +159,43 @@ button {
 </div>
 
 <script>
-/* =========================================================
+/* =====================================================
+   NORMALIZZAZIONE VERBI (CAA)
+   ===================================================== */
+
+const verbiInfinito = {
+  "mangio": "mangiare",
+  "mangi": "mangiare",
+  "mangia": "mangiare",
+  "mangiamo": "mangiare",
+
+  "bevo": "bere",
+  "bevi": "bere",
+  "beve": "bere",
+
+  "vado": "andare",
+  "vai": "andare",
+  "va": "andare",
+  "andiamo": "andare",
+
+  "cammino": "camminare",
+  "cammini": "camminare",
+  "cammina": "camminare",
+
+  "vedo": "vedere",
+  "vedi": "vedere",
+  "vede": "vedere",
+
+  "gioco": "giocare",
+  "gioca": "giocare",
+
+  "dormo": "dormire",
+  "dorme": "dormire"
+};
+
+/* =====================================================
    LOGICA CAA – SOLO ARASAAC
-   ========================================================= */
+   ===================================================== */
 
 const stopwords = [
   "il","lo","la","i","gli","le","un","uno","una",
@@ -212,7 +246,9 @@ async function genera() {
 
       const label = document.createElement("div");
       label.className = "word";
-      label.textContent = parola;
+
+      const parolaCAA = verbiInfinito[parola] || parola;
+      label.textContent = parolaCAA;
 
       card.appendChild(img);
       card.appendChild(label);
@@ -224,9 +260,9 @@ async function genera() {
   }
 }
 
-/* =========================================================
-   PDF – STRISCIA CAA, NESSUNA DISTORSIONE
-   ========================================================= */
+/* =====================================================
+   PDF – STRISCIA CAA, PULITO E STABILE
+   ===================================================== */
 
 async function scaricaPDF() {
   const { jsPDF } = window.jspdf;
@@ -269,4 +305,3 @@ async function scaricaPDF() {
 </body>
 </html>
 
-   
