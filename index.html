@@ -2,16 +2,13 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<title>CAA – ARASAAC</title>
+<title>CAA – ARASAAC Didattica</title>
 
-<!-- Librerie PDF -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
-/* =====================================================
-   STILE GENERALE (SCHERMO)
-   ===================================================== */
+/* ================= BASE ================= */
 
 body {
   font-family: Arial, sans-serif;
@@ -20,79 +17,62 @@ body {
   text-align: center;
 }
 
-h1 {
-  font-size: 28px;
-  margin-bottom: 20px;
-}
+h1 { font-size: 28px; }
 
-/* -------- CONTROLLI -------- */
+/* ================= CONTROLLI ================= */
 
 #controls {
-  margin-bottom: 25px;
+  margin-bottom: 15px;
 }
 
-input {
-  width: 65%;
+input, select {
   padding: 12px;
-  font-size: 20px;
-  border-radius: 6px;
-  border: 1px solid #999;
+  font-size: 18px;
+  margin: 5px;
 }
 
 button {
   padding: 12px 20px;
   font-size: 18px;
-  margin-left: 10px;
-  border-radius: 6px;
+  margin: 5px;
   cursor: pointer;
 }
 
-/* -------- MESSAGGI -------- */
-
 #messages {
-  margin-top: 15px;
+  margin-top: 10px;
   font-size: 18px;
   color: #b00020;
-  font-weight: bold;
 }
 
-/* =====================================================
-   AREA CAA (SCHERMO)
-   ===================================================== */
+/* ================= AREA CAA ================= */
 
 #pdf-content {
   max-width: 1200px;
-  margin: 30px auto;
-  background: #ffffff;
-  padding: 30px;
-  border-radius: 14px;
+  margin: 20px auto;
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
 }
 
-/* Griglia centrata e stabile */
 #output {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 30px;
+  gap: 24px;
   justify-items: center;
-  align-items: start;
 }
 
-/* -------- CARD CAA -------- */
+/* ================= CARD ================= */
 
 .card {
   width: 200px;
-  background: #ffffff;
-  border: 2px solid #000;
   border-radius: 14px;
-  padding: 16px;
-  box-sizing: border-box;
-  text-align: center;
+  padding: 14px;
+  border: 3px solid #000;
 }
 
 .card img {
   width: 140px;
-  height: auto;
-  margin-bottom: 10px;
+  cursor: pointer;
 }
 
 .word {
@@ -101,55 +81,63 @@ button {
   text-transform: uppercase;
 }
 
-/* =====================================================
-   MODALITÀ STAMPA / STRISCIA CAA
-   ===================================================== */
+/* ===== COLORI SEMANTICI ===== */
+.persona { background: #ffe066; }
+.verbo   { background: #b7f0c1; }
+.nome    { background: #cce0ff; }
 
-@media print {
+/* ================= MODALITÀ BAMBINI PICCOLI ================= */
 
-  body {
-    background: white;
-    margin: 0;
-  }
+.small .card { width: 240px; }
+.small .word { font-size: 26px; }
 
-  h1,
-  #controls,
-  #messages {
-    display: none !important;
-  }
+/* ================= MODALITÀ TABLET / LIM ================= */
 
-  #pdf-content {
-    padding: 10px;
-    margin: 0;
-    border-radius: 0;
-  }
+.tablet .card { width: 260px; }
+.tablet button, .tablet input, .tablet select {
+  font-size: 22px;
+  padding: 16px;
+}
 
-  /* STRISCIA ORIZZONTALE */
-  #output {
-    display: flex !important;
-    flex-wrap: nowrap !important;
-    gap: 20px;
-    justify-content: flex-start;
-  }
+/* ================= SALVATI ================= */
 
-  .card {
-    width: 180px;
-    border: 2px solid #000;
-    page-break-inside: avoid;
-  }
+#saved {
+  margin-top: 20px;
+}
+
+.saved-item {
+  cursor: pointer;
+  padding: 8px;
+  background: #ddd;
+  margin: 4px;
 }
 </style>
 </head>
 
 <body>
 
-<h1>Comunicazione Aumentativa – ARASAAC</h1>
+<h1>CAA – ARASAAC</h1>
 
 <div id="controls">
-  <input id="sentence" type="text"
-         placeholder="Scrivi una frase (es. io cammino nel bosco)">
+  <select id="profile" onchange="caricaProfilo()">
+    <option value="A">Bambino A</option>
+    <option value="B">Bambino B</option>
+    <option value="C">Bambino C</option>
+  </select>
+
+  <input id="sentence" placeholder="Scrivi una frase">
+
   <button onclick="genera()">Genera</button>
-  <button onclick="scaricaPDF()">Scarica PDF</button>
+  <button onclick="scaricaPDF()">PDF</button>
+  <button onclick="salvaFrase()">⭐ Salva</button>
+
+  <label>
+    <input type="checkbox" onchange="toggleSmall(this)"> Bambini piccoli
+  </label>
+
+  <label>
+    <input type="checkbox" onchange="toggleTablet(this)"> Tablet / LIM
+  </label>
 </div>
 
 <div id="messages"></div>
@@ -158,150 +146,133 @@ button {
   <div id="output"></div>
 </div>
 
+<div id="saved">
+  <h3>Frasi salvate</h3>
+  <div id="savedList"></div>
+</div>
+
 <script>
-/* =====================================================
-   NORMALIZZAZIONE VERBI (CAA)
-   ===================================================== */
+/* ================= DATI ================= */
 
-const verbiInfinito = {
-  "mangio": "mangiare",
-  "mangi": "mangiare",
-  "mangia": "mangiare",
-  "mangiamo": "mangiare",
-
-  "bevo": "bere",
-  "bevi": "bere",
-  "beve": "bere",
-
-  "vado": "andare",
-  "vai": "andare",
-  "va": "andare",
-  "andiamo": "andare",
-
-  "cammino": "camminare",
-  "cammini": "camminare",
-  "cammina": "camminare",
-
-  "vedo": "vedere",
-  "vedi": "vedere",
-  "vede": "vedere",
-
-  "gioco": "giocare",
-  "gioca": "giocare",
-
-  "dormo": "dormire",
-  "dorme": "dormire"
+const persone = ["io","tu","lui","lei","noi","voi","loro","bambino","bambina"];
+const verbiBase = {
+  "mangio":"mangiare","mangi":"mangiare","mangia":"mangiare",
+  "vado":"andare","vai":"andare","va":"andare",
+  "cammino":"camminare","cammina":"camminare",
+  "gioco":"giocare","gioca":"giocare",
+  "vedo":"vedere","vede":"vedere"
 };
+const stopwords = ["il","lo","la","i","gli","le","un","una","a","di","in","con","per","e","nel","nella"];
 
-/* =====================================================
-   LOGICA CAA – SOLO ARASAAC
-   ===================================================== */
+function categoria(p) {
+  if (persone.includes(p)) return "persona";
+  if (verbiBase[p]) return "verbo";
+  return "nome";
+}
 
-const stopwords = [
-  "il","lo","la","i","gli","le","un","uno","una",
-  "a","di","da","in","con","su","per","e","ma",
-  "nel","nello","nella","nei","nelle"
-];
+function normalizza(p) {
+  return verbiBase[p] || p;
+}
+
+/* ================= GENERA ================= */
 
 async function genera() {
   const output = document.getElementById("output");
-  const messages = document.getElementById("messages");
-
   output.innerHTML = "";
-  messages.textContent = "";
+  document.getElementById("messages").textContent = "";
 
-  const frase = document
-    .getElementById("sentence")
-    .value
-    .toLowerCase()
-    .replace(/[.,!?]/g, "");
+  const frase = document.getElementById("sentence").value
+    .toLowerCase().replace(/[.,!?]/g,"");
 
-  const parole = frase.split(" ");
-
-  for (let parola of parole) {
+  for (let parola of frase.split(" ")) {
     if (stopwords.includes(parola)) continue;
 
-    try {
-      const res = await fetch(
-        `https://api.arasaac.org/api/pictograms/it/search/${parola}`
-      );
-      const dati = await res.json();
+    const res = await fetch(`https://api.arasaac.org/api/pictograms/it/search/${parola}`);
+    const dati = await res.json();
+    if (!dati.length) continue;
 
-      if (!dati.length) {
-        messages.textContent =
-          "Alcune parole non hanno pittogrammi ARASAAC.";
-        continue;
-      }
-
-      const id = dati[0]._id;
-      const imgUrl =
-        `https://static.arasaac.org/pictograms/${id}/${id}_300.png`;
-
-      const card = document.createElement("div");
-      card.className = "card";
-
-      const img = document.createElement("img");
-      img.src = imgUrl;
-      img.crossOrigin = "anonymous";
-
-      const label = document.createElement("div");
-      label.className = "word";
-
-      const parolaCAA = verbiInfinito[parola] || parola;
-      label.textContent = parolaCAA;
-
-      card.appendChild(img);
-      card.appendChild(label);
-      output.appendChild(card);
-
-    } catch {
-      messages.textContent = "Errore di connessione ad ARASAAC.";
-    }
+    creaCard(parola, dati);
   }
 }
 
-/* =====================================================
-   PDF – STRISCIA CAA, PULITO E STABILE
-   ===================================================== */
+/* ================= CARD + SCELTA ================= */
+
+function creaCard(parola, dati) {
+  const card = document.createElement("div");
+  const cat = categoria(parola);
+  card.className = `card ${cat}`;
+
+  const img = document.createElement("img");
+  img.src = `https://static.arasaac.org/pictograms/${dati[0]._id}/${dati[0]._id}_300.png`;
+  img.onclick = () => scegli(img, dati);
+
+  const label = document.createElement("div");
+  label.className = "word";
+  label.textContent = normalizza(parola);
+
+  card.append(img,label);
+  document.getElementById("output").appendChild(card);
+}
+
+function scegli(img, dati) {
+  const i = prompt("Numero pittogramma (0–"+(dati.length-1)+")");
+  if (dati[i]) {
+    img.src = `https://static.arasaac.org/pictograms/${dati[i]._id}/${dati[i]._id}_300.png`;
+  }
+}
+
+/* ================= PDF ================= */
 
 async function scaricaPDF() {
   const { jsPDF } = window.jspdf;
-  const element = document.getElementById("pdf-content");
-
-  const canvas = await html2canvas(element, {
-    scale: 2,
-    backgroundColor: "#ffffff",
-    useCORS: true
-  });
-
-  const imgData = canvas.toDataURL("image/png");
-
-  const pdf = new jsPDF("landscape", "mm", "a4");
-
-  const pdfWidth = pdf.internal.pageSize.getWidth();
-  const pdfHeight = pdf.internal.pageSize.getHeight();
-
-  const imgRatio = canvas.width / canvas.height;
-  const pdfRatio = pdfWidth / pdfHeight;
-
-  let finalWidth, finalHeight;
-
-  if (imgRatio > pdfRatio) {
-    finalWidth = pdfWidth - 20;
-    finalHeight = finalWidth / imgRatio;
-  } else {
-    finalHeight = pdfHeight - 20;
-    finalWidth = finalHeight * imgRatio;
-  }
-
-  const x = (pdfWidth - finalWidth) / 2;
-  const y = (pdfHeight - finalHeight) / 2;
-
-  pdf.addImage(imgData, "PNG", x, y, finalWidth, finalHeight);
+  const canvas = await html2canvas(document.getElementById("pdf-content"), {scale:2});
+  const pdf = new jsPDF("landscape","mm","a4");
+  pdf.addImage(canvas,"PNG",10,10,277,190);
   pdf.save("frase_CAA.pdf");
 }
+
+/* ================= PROFILI ================= */
+
+function key() {
+  return "frasiCAA_"+document.getElementById("profile").value;
+}
+
+function salvaFrase() {
+  const frase = document.getElementById("sentence").value;
+  if (!frase) return;
+  const arr = JSON.parse(localStorage.getItem(key()) || "[]");
+  arr.push(frase);
+  localStorage.setItem(key(), JSON.stringify(arr));
+  mostra();
+}
+
+function mostra() {
+  const list = document.getElementById("savedList");
+  list.innerHTML = "";
+  const arr = JSON.parse(localStorage.getItem(key()) || "[]");
+  arr.forEach(f => {
+    const d = document.createElement("div");
+    d.className = "saved-item";
+    d.textContent = f;
+    d.onclick = () => { document.getElementById("sentence").value = f; genera(); };
+    list.appendChild(d);
+  });
+}
+
+function caricaProfilo() { mostra(); }
+
+/* ================= MODALITÀ ================= */
+
+function toggleSmall(cb) {
+  document.body.classList.toggle("small", cb.checked);
+}
+
+function toggleTablet(cb) {
+  document.body.classList.toggle("tablet", cb.checked);
+}
+
+mostra();
 </script>
 
 </body>
 </html>
-
