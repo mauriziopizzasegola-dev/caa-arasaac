@@ -1,211 +1,272 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8" />
-  <title>CAA – ARASAAC</title>
+<meta charset="UTF-8">
+<title>CAA – ARASAAC</title>
 
-  <!-- Librerie PDF -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<!-- Librerie PDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-  <style>
-    /* ===== STILE BASE ===== */
+<style>
+/* =========================================================
+   STILE GENERALE (SCHERMO)
+   ========================================================= */
 
-    body {
-      font-family: Arial, sans-serif;
-      background: #f5f5f5;
-      padding: 20px;
-      text-align: center;
-    }
+body {
+  font-family: Arial, sans-serif;
+  background: #f2f4f7;
+  padding: 20px;
+  text-align: center;
+}
 
-    h1 {
-      margin-bottom: 20px;
-    }
+h1 {
+  font-size: 28px;
+  margin-bottom: 20px;
+}
 
-    #controls {
-      margin-bottom: 20px;
-    }
+/* -------- CONTROLLI -------- */
 
-    input {
-      width: 60%;
-      padding: 10px;
-      font-size: 18px;
-    }
+#controls {
+  margin-bottom: 25px;
+}
 
-    button {
-      padding: 10px 18px;
-      font-size: 18px;
-      margin-left: 10px;
-      cursor: pointer;
-    }
+input {
+  width: 65%;
+  padding: 12px;
+  font-size: 20px;
+  border-radius: 6px;
+  border: 1px solid #999;
+}
 
-    #messages {
-      margin-top: 15px;
-      color: #b00020;
-      font-weight: bold;
-    }
+button {
+  padding: 12px 20px;
+  font-size: 18px;
+  margin-left: 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
 
-    /* ===== AREA CAA ===== */
+/* -------- MESSAGGI -------- */
 
-    #pdf-content {
-      max-width: 1100px;      /* BLOCCO CHIAVE */
-      margin: 0 auto;
-      background: white;
-      padding: 20px;
-    }
+#messages {
+  margin-top: 15px;
+  font-size: 18px;
+  color: #b00020;
+  font-weight: bold;
+}
 
-    #output {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 20px;
-      justify-content: flex-start;
-    }
+/* =========================================================
+   AREA CAA (SCHERMO)
+   ========================================================= */
 
-    .card {
-      width: 180px;
-      background: #fff;
-      border: 1px solid #000;
-      border-radius: 10px;
-      padding: 10px;
-      box-sizing: border-box;
-      text-align: center;
-    }
+#pdf-content {
+  max-width: 1200px;
+  margin: 30px auto;
+  background: #ffffff;
+  padding: 30px;
+  border-radius: 14px;
+}
 
-    .card img {
-      width: 120px;
-      height: auto;
-    }
+/* Griglia centrata e stabile */
+#output {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 30px;
+  justify-items: center;
+  align-items: start;
+}
 
-    .word {
-      margin-top: 8px;
-      font-size: 18px;
-      font-weight: bold;
-    }
-  </style>
+/* -------- CARD CAA -------- */
+
+.card {
+  width: 200px;
+  background: #ffffff;
+  border: 2px solid #000;
+  border-radius: 14px;
+  padding: 16px;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+.card img {
+  width: 140px;
+  height: auto;
+  margin-bottom: 10px;
+}
+
+.word {
+  font-size: 22px;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+/* =========================================================
+   MODALITÀ STAMPA / STRISCIA CAA
+   ========================================================= */
+
+@media print {
+
+  body {
+    background: white;
+    margin: 0;
+  }
+
+  h1,
+  #controls,
+  #messages {
+    display: none !important;
+  }
+
+  #pdf-content {
+    padding: 10px;
+    margin: 0;
+    border-radius: 0;
+  }
+
+  /* STRISCIA ORIZZONTALE */
+  #output {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: 20px;
+    justify-content: flex-start;
+  }
+
+  .card {
+    width: 180px;
+    border: 2px solid #000;
+    page-break-inside: avoid;
+  }
+}
+</style>
 </head>
 
 <body>
 
-  <h1>Comunicazione Aumentativa – ARASAAC</h1>
+<h1>Comunicazione Aumentativa – ARASAAC</h1>
 
-  <div id="controls">
-    <input
-      id="sentence"
-      type="text"
-      placeholder="Scrivi una frase (es. io cammino nel bosco)"
-    />
-    <button onclick="genera()">Genera</button>
-    <button onclick="scaricaPDF()">Scarica PDF</button>
-  </div>
+<div id="controls">
+  <input id="sentence" type="text"
+         placeholder="Scrivi una frase (es. io cammino nel bosco)">
+  <button onclick="genera()">Genera</button>
+  <button onclick="scaricaPDF()">Scarica PDF</button>
+</div>
 
-  <div id="messages"></div>
+<div id="messages"></div>
 
-  <div id="pdf-content">
-    <div id="output"></div>
-  </div>
+<div id="pdf-content">
+  <div id="output"></div>
+</div>
 
-  <script>
-    /* ===== LOGICA CAA ===== */
+<script>
+/* =========================================================
+   LOGICA CAA – SOLO ARASAAC
+   ========================================================= */
 
-    const stopwords = [
-      "il","lo","la","i","gli","le","un","uno","una",
-      "a","di","da","in","con","su","per","e","ma","nel","nello","nella"
-    ];
+const stopwords = [
+  "il","lo","la","i","gli","le","un","uno","una",
+  "a","di","da","in","con","su","per","e","ma",
+  "nel","nello","nella","nei","nelle"
+];
 
-    async function genera() {
-      const output = document.getElementById("output");
-      const messages = document.getElementById("messages");
-      output.innerHTML = "";
-      messages.textContent = "";
+async function genera() {
+  const output = document.getElementById("output");
+  const messages = document.getElementById("messages");
 
-      const frase = document
-        .getElementById("sentence")
-        .value
-        .toLowerCase()
-        .replace(/[.,!?]/g, "");
+  output.innerHTML = "";
+  messages.textContent = "";
 
-      const parole = frase.split(" ");
+  const frase = document
+    .getElementById("sentence")
+    .value
+    .toLowerCase()
+    .replace(/[.,!?]/g, "");
 
-      for (let parola of parole) {
-        if (stopwords.includes(parola)) continue;
+  const parole = frase.split(" ");
 
-        try {
-          const res = await fetch(
-            `https://api.arasaac.org/api/pictograms/it/search/${parola}`
-          );
-          const dati = await res.json();
+  for (let parola of parole) {
+    if (stopwords.includes(parola)) continue;
 
-          if (!dati.length) {
-            messages.textContent =
-              "Alcune parole non hanno pittogrammi ARASAAC.";
-            continue;
-          }
+    try {
+      const res = await fetch(
+        `https://api.arasaac.org/api/pictograms/it/search/${parola}`
+      );
+      const dati = await res.json();
 
-          const id = dati[0]._id;
-          const imgUrl =
-            `https://static.arasaac.org/pictograms/${id}/${id}_300.png`;
-
-          const card = document.createElement("div");
-          card.className = "card";
-
-          const img = document.createElement("img");
-          img.src = imgUrl;
-          img.crossOrigin = "anonymous";
-
-          const label = document.createElement("div");
-          label.className = "word";
-          label.textContent = parola;
-
-          card.appendChild(img);
-          card.appendChild(label);
-          output.appendChild(card);
-
-        } catch (err) {
-          messages.textContent = "Errore di connessione ad ARASAAC.";
-        }
-      }
-    }
-
-    /* ===== PDF CORRETTO (NO DISTORSIONI) ===== */
-
-    async function scaricaPDF() {
-      const { jsPDF } = window.jspdf;
-      const element = document.getElementById("pdf-content");
-
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        backgroundColor: "#ffffff",
-        useCORS: true
-      });
-
-      const imgData = canvas.toDataURL("image/png");
-
-      const pdf = new jsPDF("landscape", "mm", "a4");
-
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-
-      const imgRatio = canvas.width / canvas.height;
-      const pdfRatio = pdfWidth / pdfHeight;
-
-      let finalWidth, finalHeight;
-
-      if (imgRatio > pdfRatio) {
-        finalWidth = pdfWidth - 20;
-        finalHeight = finalWidth / imgRatio;
-      } else {
-        finalHeight = pdfHeight - 20;
-        finalWidth = finalHeight * imgRatio;
+      if (!dati.length) {
+        messages.textContent =
+          "Alcune parole non hanno pittogrammi ARASAAC.";
+        continue;
       }
 
-      const x = (pdfWidth - finalWidth) / 2;
-      const y = (pdfHeight - finalHeight) / 2;
+      const id = dati[0]._id;
+      const imgUrl =
+        `https://static.arasaac.org/pictograms/${id}/${id}_300.png`;
 
-      pdf.addImage(imgData, "PNG", x, y, finalWidth, finalHeight);
-      pdf.save("frase_CAA.pdf");
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const img = document.createElement("img");
+      img.src = imgUrl;
+      img.crossOrigin = "anonymous";
+
+      const label = document.createElement("div");
+      label.className = "word";
+      label.textContent = parola;
+
+      card.appendChild(img);
+      card.appendChild(label);
+      output.appendChild(card);
+
+    } catch {
+      messages.textContent = "Errore di connessione ad ARASAAC.";
     }
-  </script>
+  }
+}
+
+/* =========================================================
+   PDF – STRISCIA CAA, NESSUNA DISTORSIONE
+   ========================================================= */
+
+async function scaricaPDF() {
+  const { jsPDF } = window.jspdf;
+  const element = document.getElementById("pdf-content");
+
+  const canvas = await html2canvas(element, {
+    scale: 2,
+    backgroundColor: "#ffffff",
+    useCORS: true
+  });
+
+  const imgData = canvas.toDataURL("image/png");
+
+  const pdf = new jsPDF("landscape", "mm", "a4");
+
+  const pdfWidth = pdf.internal.pageSize.getWidth();
+  const pdfHeight = pdf.internal.pageSize.getHeight();
+
+  const imgRatio = canvas.width / canvas.height;
+  const pdfRatio = pdfWidth / pdfHeight;
+
+  let finalWidth, finalHeight;
+
+  if (imgRatio > pdfRatio) {
+    finalWidth = pdfWidth - 20;
+    finalHeight = finalWidth / imgRatio;
+  } else {
+    finalHeight = pdfHeight - 20;
+    finalWidth = finalHeight * imgRatio;
+  }
+
+  const x = (pdfWidth - finalWidth) / 2;
+  const y = (pdfHeight - finalHeight) / 2;
+
+  pdf.addImage(imgData, "PNG", x, y, finalWidth, finalHeight);
+  pdf.save("frase_CAA.pdf");
+}
+</script>
 
 </body>
 </html>
 
+   
